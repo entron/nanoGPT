@@ -106,16 +106,19 @@ class Block(nn.Module):
         self.attn = CausalSelfAttention(config)
         self.ln_2 = LayerNorm(config.n_embd, bias=config.bias)
         self.mlp = MLP(config)
+        self.n_layer_update = config.n_layer_update
 
     def forward(self, x):
-        x = x + self.attn(self.ln_1(x))
-        x = x + self.mlp(self.ln_2(x))
+        for _ in range(self.n_layer_update):
+            x = x + self.attn(self.ln_1(x))
+            x = x + self.mlp(self.ln_2(x))
         return x
 
 @dataclass
 class GPTConfig:
     block_size: int = 1024
     vocab_size: int = 50304 # GPT-2 vocab_size of 50257, padded up to nearest multiple of 64 for efficiency
+    n_layer_update: int = 1
     n_layer: int = 12
     n_head: int = 12
     n_embd: int = 768
